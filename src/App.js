@@ -9,11 +9,31 @@ class App extends Component {
     nextID: todosList.length + 1
   };
 
+  toggleCompleted = todosId => event => {
+    let index = this.state.todos.findIndex(todo => todo.id === todosId)
+    let newTodoList = this.state.todos.slice();
+    newTodoList[index].completed = !newTodoList[index].completed;
+    this.setState({ todos: newTodoList });
+  };
+
+  deleteTodo = todosId => event => {
+    let index = this.state.todos.findIndex(todo => todo.id === todosId)
+    let newTodoList = this.state.todos.slice();
+    newTodoList.splice(index,1)
+    this.setState({ todos: newTodoList });
+  }
+  
   handleLoadSearchResults = event => {
     this.setState({
       search: event.target.value
     });
   };
+
+  clearCompleted = () => {
+    let newTodoList = this.state.todos.slice();
+    newTodoList = newTodoList.filter(todo => todo.completed === false)
+    this.setState ({ todos: newTodoList })
+  }
 
   keyHandling = event => {
     if (event.keyCode === 13) {
@@ -24,11 +44,14 @@ class App extends Component {
         completed: false
       };
       const newTodoList = this.state.todos.slice();
-      console.log("keyHandling is ran")
       newTodoList.push(newTodo);
-      this.setState(previousState => ({todos: newTodoList, search: "", nextID: previousState.nextID + 1}))
+      this.setState(previousState => ({
+        todos: newTodoList,
+        search: "",
+        nextID: previousState.nextID + 1
+      }));
     }
-  }
+  };
 
   render() {
     return (
@@ -45,12 +68,22 @@ class App extends Component {
             onKeyDown={this.keyHandling}
           />
         </header>
-        <TodoList todos={this.state.todos} />
+        <TodoList>
+          {this.state.todos.map(todo => (
+            <TodoItem
+              title={todo.title}
+              completed={todo.completed}
+              key={todo.id}
+              toggleCompleted={this.toggleCompleted(todo.id)}
+              deleteTodo={this.deleteTodo(todo.id)}
+            />
+          ))}
+        </TodoList>
         <footer className="footer">
           <span className="todo-count">
             <strong>0</strong> item(s) left
           </span>
-          <button className="clear-completed">Clear completed</button>
+          <button className="clear-completed" onClick={this.clearCompleted}>Clear completed</button>
         </footer>
       </section>
     );
@@ -66,9 +99,10 @@ class TodoItem extends Component {
             className="toggle"
             type="checkbox"
             defaultChecked={this.props.completed}
+            onClick={this.props.toggleCompleted}
           />
           <label>{this.props.title}</label>
-          <button className="destroy" />
+          <button className="destroy" onClick={this.props.deleteTodo}/>
         </div>
       </li>
     );
@@ -79,11 +113,7 @@ class TodoList extends Component {
   render() {
     return (
       <section className="main">
-        <ul className="todo-list">
-          {this.props.todos.map(todo => (
-            <TodoItem title={todo.title} completed={todo.completed} key={todo.id}/>
-          ))}
-        </ul>
+        <ul className="todo-list">{this.props.children}</ul>
       </section>
     );
   }
